@@ -5,9 +5,11 @@ import { ElementalEffect } from './components/ElementalEffects';
 import { Leaderboard } from './components/Leaderboard';
 import { UsernameModal } from './components/UsernameModal';
 import { ShareScore } from './components/ShareScore';
+import { CookieConsent } from './components/CookieConsent';
 import { generateLetterPool, drawFromPool, replenishPool, calculateWordScore, isValidWord } from './utils/gameLogic';
 import { playSound, toggleSound, isSoundEnabled } from './utils/sound';
 import { saveScore, getLeaderboard, getLastUsername, hasHighScore } from './utils/storage';
+import { trackGameStart, trackGameEnd, trackWordSubmit, trackHighScore } from './utils/analytics';
 import { GameState, Letter, GameMode } from './types/game';
 import { Trophy, Clock, Shuffle, RefreshCw, HelpCircle, X, Flame, Star, Volume2, VolumeX } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -483,6 +485,8 @@ function App() {
           />
         </React.Fragment>
       ))}
+
+      <CookieConsent />
     </div>
   );
 }

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Word Alchemist</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            color: #1a1a1a;
+        }
+        h1, h2 {
+            color: #4c1d95;
+        }
+        a {
+            color: #7c3aed;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p>Last updated: March 2024</p>
+
+        <h2>1. Introduction</h2>
+        <p>Welcome to Word Alchemist. This Privacy Policy explains how we collect, use, and protect your personal information when you use our game.</p>
+
+        <h2>2. Information We Collect</h2>
+        <p>We collect the following types of information:</p>
+        <ul>
+            <li>Game scores and usernames for the leaderboard</li>
+            <li>Analytics data about how you use the game</li>
+            <li>Cookie preferences</li>
+        </ul>
+
+        <h2>3. How We Use Cookies</h2>
+        <p>We use cookies to:</p>
+        <ul>
+            <li>Remember your game preferences</li>
+            <li>Store your high scores locally</li>
+            <li>Analyze game usage through Google Analytics</li>
+        </ul>
+
+        <h2>4. Analytics</h2>
+        <p>We use Google Analytics to understand how players interact with our game. This helps us improve the gaming experience. The analytics data is anonymized and does not personally identify you.</p>
+
+        <h2>5. Your Rights</h2>
+        <p>Under GDPR, you have the right to:</p>
+        <ul>
+            <li>Access your personal data</li>
+            <li>Request deletion of your data</li>
+            <li>Object to data processing</li>
+            <li>Withdraw consent at any time</li>
+        </ul>
+
+        <h2>6. Contact</h2>
+        <p>For any privacy-related questions, please contact us at privacy@wordalchemist.com</p>
+
+        <h2>7. Changes to This Policy</h2>
+        <p>We may update this policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+    </div>
+</body>
+</html>
