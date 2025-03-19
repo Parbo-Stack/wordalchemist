@@ -9,9 +9,8 @@ import { CookieConsent } from './components/CookieConsent';
 import { generateLetterPool, drawFromPool, replenishPool, calculateWordScore, isValidWord } from './utils/gameLogic';
 import { playSound, toggleSound, isSoundEnabled } from './utils/sound';
 import { saveScore, getLeaderboard, getLastUsername, hasHighScore } from './utils/storage';
-import { trackGameStart, trackGameEnd, trackWordSubmit, trackHighScore } from './utils/analytics';
 import { GameState, Letter, GameMode } from './types/game';
-import { Trophy, Clock, Shuffle, RefreshCw, HelpCircle, X, Flame, Star, Volume2, VolumeX } from 'lucide-react';
+import { Clock, Shuffle, HelpCircle, X, Volume2, VolumeX, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const INITIAL_STATE: GameState = {
@@ -41,7 +40,6 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [gameMode, setGameMode] = useState<GameMode>('timed');
   const [timeLeft, setTimeLeft] = useState(GAME_TIME);
   const [isPlaying, setIsPlaying] = useState(false);
   const [leaderboard, setLeaderboard] = useState(() => getLeaderboard());
@@ -57,7 +55,7 @@ function App() {
 
   useEffect(() => {
     let timer: number;
-    if (isPlaying && gameMode === 'timed' && timeLeft > 0) {
+    if (isPlaying && timeLeft > 0) {
       timer = window.setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 10 && prev > 0 && soundOn) {
@@ -68,7 +66,7 @@ function App() {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isPlaying, gameMode, timeLeft, soundOn]);
+  }, [isPlaying, timeLeft, soundOn]);
 
   useEffect(() => {
     if (timeLeft === 0 && isPlaying) {
@@ -126,7 +124,7 @@ function App() {
   };
 
   const handleLetterClick = (letter: Letter) => {
-    if (!isPlaying && gameMode === 'timed') return;
+    if (!isPlaying) return;
     setErrorMessage(null);
     if (soundOn) {
       playSound('click');
@@ -206,7 +204,7 @@ function App() {
         const [drawn, remainingPool] = drawFromPool(updatedPool, GRID_SIZE, prev.wordsSubmitted + 1);
         const newScore = prev.score + wordScore.total;
 
-        if (gameMode === 'endless' && newScore > (leaderboard[0]?.score || 0)) {
+        if (newScore > (leaderboard[0]?.score || 0)) {
           const lastUsername = getLastUsername();
           if (lastUsername && hasHighScore(lastUsername)) {
             saveScore(lastUsername, newScore);

@@ -1,13 +1,14 @@
 export type ElementType = 'fire' | 'water' | 'earth' | 'air' | 'star' | 'lightning' | 'crystal';
 export type GameMode = 'timed' | 'endless';
+export type SoundType = 'clear' | 'click' | 'combo' | 'countdown' | 'crystal' | 'earth' | 'error' | 'fire' | 'message' | 'score' | 'send' | 'shuffle' | 'star' | 'start' | 'thunder' | 'water' | 'wind' | 'highScore' | 'timeUp';
 
 export interface Letter {
   char: string;
-  element: ElementType;
+  element: ElementType | null;
   selected: boolean;
 }
 
-export interface WordScore {
+export interface GameWordScore {
   word: string;
   score: number;
 }
@@ -18,7 +19,7 @@ export interface GameState {
   score: number;
   currentWord: Letter[];
   tower: string[];
-  wordScores: WordScore[];
+  wordScores: GameWordScore[];
   level: number;
   combo: number;
   wordsSubmitted: number;
@@ -31,7 +32,7 @@ export interface ElementalCombo {
 }
 
 export interface RareElement {
-  type: 'star' | 'lightning' | 'crystal';
+  type: ElementType;
   bonus: number;
   probability: number;
 }
@@ -48,7 +49,7 @@ export interface ElementalEffect {
   name: string;
   description: string;
   animation: string;
-  sound: string;
+  sound: SoundType;
 }
 
 export const ELEMENT_EFFECTS: Record<ElementType, ElementalEffect> = {

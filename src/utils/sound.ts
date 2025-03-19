@@ -1,4 +1,5 @@
 import { Howl } from 'howler';
+import { SoundType } from '../types/game';
 
 // Initialize sound state from localStorage if available
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
@@ -11,7 +12,7 @@ export const toggleSound = () => {
 
 export const isSoundEnabled = () => soundEnabled;
 
-const sounds = {
+const sounds: Record<SoundType, Howl> = {
   score: new Howl({
     src: ['https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3'],
     volume: 0.5
@@ -90,7 +91,7 @@ const sounds = {
   })
 };
 
-export const playSound = (type: keyof typeof sounds) => {
+export const playSound = (type: SoundType) => {
   if (soundEnabled) {
     sounds[type].play();
   }

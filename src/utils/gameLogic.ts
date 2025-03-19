@@ -1,4 +1,4 @@
-import { Letter, ElementType, ElementalCombo, RareElement, WordScore } from '../types/game';
+import { Letter, ElementType, ElementalCombo, RareElement, WordScore, SoundType } from '../types/game';
 import englishWords from 'an-array-of-english-words';
 import { playSound } from './sound';
 
@@ -128,7 +128,7 @@ export const replenishPool = (pool: Letter[]): Letter[] => {
   return pool;
 };
 
-const elementSoundMap: Record<ElementType, string> = {
+const elementSoundMap: Record<ElementType, SoundType> = {
   fire: 'fire',
   water: 'water',
   earth: 'earth',
@@ -154,7 +154,7 @@ export const calculateWordScore = (word: Letter[]): WordScore => {
   let multiplier = 1;
   let bonusPoints = 0;
   const combos: string[] = [];
-  const elements = word.map(l => l.element).filter(Boolean) as ElementType[];
+  const elements = word.map(l => l.element).filter((e): e is ElementType => e !== null);
 
   const elementCounts = elements.reduce((acc, element) => {
     acc[element] = (acc[element] || 0) + 1;
