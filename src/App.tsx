@@ -485,7 +485,6 @@ function App() {
         </React.Fragment>
       ))}
       <CookieConsent />
-      <PrivacyPolicy />
     </div>
   );
 }
