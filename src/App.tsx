@@ -12,6 +12,7 @@ import { saveScore, getLeaderboard, getLastUsername, hasHighScore } from './util
 import { GameState, Letter, GameMode } from './types/game';
 import { Clock, Shuffle, HelpCircle, X, Volume2, VolumeX, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import PrivacyPolicy from "./pages/privacy-policy";
 
 const INITIAL_STATE: GameState = {
   letters: [],
@@ -483,7 +484,7 @@ function App() {
           />
         </React.Fragment>
       ))}
-
+      <PrivacyPolicy/>
       <CookieConsent />
     </div>
   );
