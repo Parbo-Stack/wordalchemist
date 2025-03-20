@@ -8,11 +8,10 @@ import { ShareScore } from './components/ShareScore';
 import { CookieConsent } from './components/CookieConsent';
 import { generateLetterPool, drawFromPool, replenishPool, calculateWordScore, isValidWord } from './utils/gameLogic';
 import { playSound, toggleSound, isSoundEnabled } from './utils/sound';
-import { saveScore, getLeaderboard, getLastUsername, hasHighScore } from './utils/storage';
+import { saveScore, getLastUsername, hasHighScore } from './utils/storage';
 import { GameState, Letter, GameMode } from './types/game';
 import { Clock, Shuffle, HelpCircle, X, Volume2, VolumeX, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import PrivacyPolicy from "./pages/privacy-policy";
 
 const INITIAL_STATE: GameState = {
   letters: [],
@@ -43,7 +42,6 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [leaderboard, setLeaderboard] = useState(() => getLeaderboard());
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled);
   const [animations, setAnimations] = useState<Array<{
@@ -78,7 +76,6 @@ function App() {
       const lastUsername = getLastUsername();
       if (lastUsername && hasHighScore(lastUsername)) {
         saveScore(lastUsername, gameState.score);
-        setLeaderboard(getLeaderboard());
       } else {
         setShowUsernameModal(true);
       }
@@ -120,7 +117,6 @@ function App() {
 
   const handleUsernameSubmit = (username: string) => {
     saveScore(username, gameState.score);
-    setLeaderboard(getLeaderboard());
     setShowUsernameModal(false);
   };
 
@@ -205,11 +201,10 @@ function App() {
         const [drawn, remainingPool] = drawFromPool(updatedPool, GRID_SIZE, prev.wordsSubmitted + 1);
         const newScore = prev.score + wordScore.total;
 
-        if (newScore > (leaderboard[0]?.score || 0)) {
+        if (newScore > 0) {
           const lastUsername = getLastUsername();
           if (lastUsername && hasHighScore(lastUsername)) {
             saveScore(lastUsername, newScore);
-            setLeaderboard(getLeaderboard());
           } else {
             setShowUsernameModal(true);
           }
@@ -400,7 +395,7 @@ function App() {
 
         {/* Leaderboard */}
         <div className="hidden lg:block w-80">
-          <Leaderboard entries={leaderboard} currentScore={gameState.score} />
+          <Leaderboard entries={[]} currentScore={gameState.score} />
         </div>
       </div>
 
@@ -450,7 +445,7 @@ function App() {
       {showLeaderboard && (
         <div className="lg:hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800/90 rounded-2xl p-8 max-w-2xl w-full">
-            <Leaderboard entries={leaderboard} currentScore={gameState.score} />
+            <Leaderboard entries={[]} currentScore={gameState.score} />
             <button
               onClick={() => setShowLeaderboard(false)}
               className="mt-6 px-6 py-3 bg-purple-600 rounded-lg w-full"
@@ -484,6 +479,7 @@ function App() {
           />
         </React.Fragment>
       ))}
+
       <CookieConsent />
     </div>
   );
