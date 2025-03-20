@@ -17,7 +17,7 @@ export const getLastUsername = (): string | null => {
 };
 
 export const hasHighScore = (username: string): boolean => {
-  return true; // Always allow submitting scores for global leaderboard
+  return true; // Always allow submitting scores for global leaderboard ()
 };
 
 // Nieuwe functie om de leaderboard op te halen
