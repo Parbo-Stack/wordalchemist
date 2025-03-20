@@ -1,5 +1,5 @@
 import { LeaderboardEntry } from '../components/Leaderboard';
-import { saveScoreToSupabase } from './supabase';
+import { saveScoreToSupabase, getGlobalLeaderboard } from './supabase';
 
 const LAST_USERNAME_KEY = 'wordAlchemistLastUsername';
 
@@ -18,4 +18,15 @@ export const getLastUsername = (): string | null => {
 
 export const hasHighScore = (username: string): boolean => {
   return true; // Always allow submitting scores for global leaderboard
+};
+
+// Nieuwe functie om de leaderboard op te halen
+export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+  try {
+    const leaderboard = await getGlobalLeaderboard();
+    return leaderboard;
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    return []; // Retourneer een lege array als er een fout is
+  }
 };
