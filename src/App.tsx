@@ -25,7 +25,7 @@ const INITIAL_STATE: GameState = {
   wordsSubmitted: 0,
 };
 
-const GAME_TIME = 60;
+const GAME_TIME = 120;
 const GRID_SIZE = 25;
 
 function App() {
