@@ -34,8 +34,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
 
     fetchLeaderboard();
     
-    // Refresh leaderboard every 30 seconds
-    const interval = setInterval(fetchLeaderboard, 30000);
+    // Refresh leaderboard every 60 seconds
+    const interval = setInterval(fetchLeaderboard, 60000);
     return () => clearInterval(interval);
   }, []);
   
