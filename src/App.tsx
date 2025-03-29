@@ -32,7 +32,6 @@ const GRID_SIZE = 25;
 
 function App() {
 
-  const [gameState, setGameState] = useState<any>({});
   const [session, setSession] = useState<any>(null);
   const [inviteCode, setInviteCode] = useState('');
   const [playerId] = useState(() => crypto.randomUUID()); // or your user ID if logged in
