@@ -4,6 +4,8 @@ import { ScoreAnimation } from './components/ScoreAnimation';
 import { ElementalEffect } from './components/ElementalEffects';
 import { Leaderboard } from './components/Leaderboard';
 import { UsernameModal } from './components/UsernameModal';
+import { supabase } from './utils/supabase';
+import { createSession, joinSession } from './utils/multiplayer';
 import { ShareScore } from './components/ShareScore';
 import { CookieConsent } from './components/CookieConsent';
 import { generateLetterPool, drawFromPool, replenishPool, calculateWordScore, isValidWord } from './utils/gameLogic';
@@ -29,6 +31,57 @@ const GAME_TIME = 120;
 const GRID_SIZE = 25;
 
 function App() {
+
+  const [gameState, setGameState] = useState<any>({});
+  const [session, setSession] = useState<any>(null);
+  const [inviteCode, setInviteCode] = useState('');
+  const [playerId] = useState(() => crypto.randomUUID()); // or your user ID if logged in
+  const [error, setError] = useState('');
+  
+  useEffect(() => {
+    if (session) {
+      const channel = supabase.channel(`game:${session.id}`);
+
+      channel
+        .on('broadcast', { event: 'state-update' }, (payload) => {
+          setGameState(payload.game_state);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [session]);
+
+  const handleCreateGame = async () => {
+    try {
+      const newSession = await createSession(playerId);
+      setSession(newSession);
+      setInviteCode(newSession.invite_code);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleJoinGame = async () => {
+    try {
+      const joinedSession = await joinSession(inviteCode, playerId);
+      setSession(joinedSession);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const updateGameState = async (newState: any) => {
+    setGameState(newState);
+    await supabase.channel(`game:${session.id}`).send({
+      type: 'broadcast',
+      event: 'state-update',
+      game_state: newState,
+    });
+  };
+  
   const [gameState, setGameState] = useState<GameState>(() => {
     const state = { ...INITIAL_STATE };
     const [drawn, remainingPool] = drawFromPool(state.letterPool, GRID_SIZE, 0);
@@ -275,8 +328,57 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0F1729] to-[#1a2436] text-white">
       <div className="max-w-7xl mx-auto px-4 py-4 flex gap-8">
+      <div className="flex flex-col items-center justify-center w-full gap-4">
+            <button
+              className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500"
+              onClick={handleCreateGame}
+            >
+              Create Multiplayer Game
+            </button> 
+
+            <input
+              className="input px-4 py-2 rounded-lg bg-gray-700 text-center"
+              value={inviteCode}
+              placeholder="Enter Invite Code"
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+            />
+            <button
+              className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-500"
+              onClick={handleJoinGame}
+            >
+              Join Game
+            </button>
+
+            {error && <p className="text-red-500">{error}</p>}
+          </div>
+        ) : (
+
         {/* Main Game Area */}
         <div className="flex-1 max-w-2xl">
+        <header className="text-center mb-4">
+                <h1 className="text-4xl font-bold">You</h1>
+              </header>
+              <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl">
+                {gameState.letters.map((letter, index) => (
+                  <LetterTile
+                    key={index}
+                    letter={letter}
+                    onClick={() => updateGameState({ ...gameState, currentWord: [...gameState.currentWord, letter] })}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 max-w-2xl opacity-50 pointer-events-none">
+              <header className="text-center mb-4">
+                <h1 className="text-4xl font-bold">Opponent</h1>
+              </header>
+              <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl">
+                {gameState.letters.map((letter, index) => (
+                  <LetterTile key={index} letter={letter} />
+                ))}
+                </div>
+
           {/* Header */}
           <header className="text-center mb-4">
             <div className="flex items-center justify-between mb-2">
