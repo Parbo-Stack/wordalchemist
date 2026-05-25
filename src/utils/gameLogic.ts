@@ -143,8 +143,8 @@ const playElementSound = (element: ElementType) => {
   if (soundName) {
     try {
       playSound(soundName);
-    } catch (error) {
-      console.warn(`Could not play sound for element: ${element}`);
+    } catch {
+      // Sound play failed, continue without error
     }
   }
 };

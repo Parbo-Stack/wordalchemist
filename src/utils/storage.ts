@@ -16,8 +16,8 @@ export const getLastUsername = (): string | null => {
   return localStorage.getItem(LAST_USERNAME_KEY);
 };
 
-export const hasHighScore = (username: string): boolean => {
-  return true; // Always allow submitting scores for global leaderboard ()
+export const hasHighScore = (): boolean => {
+  return true; // Always allow submitting scores for global leaderboard
 };
 
 // Nieuwe functie om de leaderboard op te halen

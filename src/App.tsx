@@ -11,7 +11,7 @@ import { CookieConsent } from './components/CookieConsent';
 import { generateLetterPool, drawFromPool, replenishPool, calculateWordScore, isValidWord } from './utils/gameLogic';
 import { playSound, toggleSound, isSoundEnabled } from './utils/sound';
 import { saveScore, getLastUsername, hasHighScore } from './utils/storage';
-import { GameState, Letter, GameMode } from './types/game';
+import { GameState, Letter } from './types/game';
 import { Clock, Shuffle, HelpCircle, X, Volume2, VolumeX, Star } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -32,10 +32,9 @@ const GRID_SIZE = 25;
 
 function App() {
 
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Record<string, unknown> | null>(null);
   const [inviteCode, setInviteCode] = useState('');
   const [playerId] = useState(() => crypto.randomUUID()); // or your user ID if logged in
-  const [error, setError] = useState('');
   
   useEffect(() => {
     if (session) {
@@ -53,32 +52,34 @@ function App() {
     }
   }, [session]);
 
-  const handleCreateGame = async () => {
+  const handleCreateGame = async (): Promise<void> => {
     try {
       const newSession = await createSession(playerId);
       setSession(newSession);
       setInviteCode(newSession.invite_code);
     } catch (err) {
-      setError(err.message);
+      console.error('Error creating game:', err);
     }
   };
 
-  const handleJoinGame = async () => {
+  const handleJoinGame = async (): Promise<void> => {
     try {
       const joinedSession = await joinSession(inviteCode, playerId);
       setSession(joinedSession);
     } catch (err) {
-      setError(err.message);
+      console.error('Error joining game:', err);
     }
   };
 
-  const updateGameState = async (newState: any) => {
+  const updateGameState = async (newState: GameState): Promise<void> => {
     setGameState(newState);
-    await supabase.channel(`game:${session.id}`).send({
-      type: 'broadcast',
-      event: 'state-update',
-      game_state: newState,
-    });
+    if (session?.id) {
+      await supabase.channel(`game:${session.id}`).send({
+        type: 'broadcast',
+        event: 'state-update',
+        game_state: newState,
+      });
+    }
   };
   
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -95,7 +96,7 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(GAME_TIME);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [animations, setAnimations] = useState<Array<{
     id: number;
     score: number;
@@ -126,8 +127,10 @@ function App() {
         playSound('timeUp');
       }
       const lastUsername = getLastUsername();
-      if (lastUsername && hasHighScore(lastUsername)) {
-        saveScore(lastUsername, gameState.score);
+      if (lastUsername && hasHighScore()) {
+        saveScore(lastUsername, gameState.score).catch(err => 
+          console.error('Error saving score on time up:', err)
+        );
       } else {
         setShowUsernameModal(true);
       }
@@ -167,8 +170,8 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, gameState.letters, gameState.currentWord]);
 
-  const handleUsernameSubmit = (username: string) => {
-    saveScore(username, gameState.score);
+  const handleUsernameSubmit = async (username: string) => {
+    await saveScore(username, gameState.score);
     setShowUsernameModal(false);
   };
 
@@ -220,7 +223,7 @@ function App() {
     }
   };
 
-  const submitWord = () => {
+  const submitWord = async () => {
     const word = gameState.currentWord.map(l => l.char).join('');
     
     if (isValidWord(word)) {
@@ -248,19 +251,24 @@ function App() {
         }
       }
 
+      const newScore = gameState.score + wordScore.total;
+
+      if (newScore > 0) {
+        const lastUsername = getLastUsername();
+        if (lastUsername && hasHighScore()) {
+          try {
+            await saveScore(lastUsername, newScore);
+          } catch (err) {
+            console.error('Error saving score:', err);
+          }
+        } else {
+          setShowUsernameModal(true);
+        }
+      }
+
       setGameState(prev => {
         const updatedPool = replenishPool(prev.letterPool);
         const [drawn, remainingPool] = drawFromPool(updatedPool, GRID_SIZE, prev.wordsSubmitted + 1);
-        const newScore = prev.score + wordScore.total;
-
-        if (newScore > 0) {
-          const lastUsername = getLastUsername();
-          if (lastUsername && hasHighScore(lastUsername)) {
-            saveScore(lastUsername, newScore);
-          } else {
-            setShowUsernameModal(true);
-          }
-        }
 
         return {
           ...prev,
@@ -326,60 +334,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0F1729] to-[#1a2436] text-white">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex gap-8">
-      <div className="flex flex-col items-center justify-center w-full gap-4">
-            <button
-              className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500"
-              onClick={handleCreateGame}
-            >
-              Create Multiplayer Game
-            </button> 
-
-            <input
-              className="input px-4 py-2 rounded-lg bg-gray-700 text-center"
-              value={inviteCode}
-              placeholder="Enter Invite Code"
-              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-            />
-            <button
-              className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-500"
-              onClick={handleJoinGame}
-            >
-              Join Game
-            </button>
-
-            {error && <p className="text-red-500">{error}</p>}
-          </div>
-        ) : (
-
-        {/* Main Game Area */}
-        <div className="flex-1 max-w-2xl">
-        <header className="text-center mb-4">
-                <h1 className="text-4xl font-bold">You</h1>
-              </header>
-              <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl">
-                {gameState.letters.map((letter, index) => (
-                  <LetterTile
-                    key={index}
-                    letter={letter}
-                    onClick={() => updateGameState({ ...gameState, currentWord: [...gameState.currentWord, letter] })}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 max-w-2xl opacity-50 pointer-events-none">
-              <header className="text-center mb-4">
-                <h1 className="text-4xl font-bold">Opponent</h1>
-              </header>
-              <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl">
-                {gameState.letters.map((letter, index) => (
-                  <LetterTile key={index} letter={letter} />
-                ))}
-                </div>
+      <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-8">
 
           {/* Header */}
-          <header className="text-center mb-4">
+          <header className="text-center">
             <div className="flex items-center justify-between mb-2">
               <button
                 onClick={handleSoundToggle}
@@ -434,69 +392,73 @@ function App() {
             )}
           </header>
 
-          {/* Game Grid */}
-          <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl backdrop-blur-sm border border-white/10">
-            {gameState.letters.map((letter, index) => (
-              <LetterTile
-                key={index}
-                letter={letter}
-                onClick={() => handleLetterClick(letter)}
-              />
-            ))}
+        <div className="flex gap-8">
+          {/* Main Game Area */}
+          <div className="flex-1 max-w-2xl">
+            {/* Game Grid */}
+            <div className="grid grid-cols-5 gap-2 mb-4 p-4 bg-gray-800/30 rounded-xl backdrop-blur-sm border border-white/10">
+              {gameState.letters.map((letter, index) => (
+                <LetterTile
+                  key={index}
+                  letter={letter}
+                  onClick={() => handleLetterClick(letter)}
+                />
+              ))}
+            </div>
+
+            {/* Word Display */}
+            {errorMessage && (
+              <div className="text-rose-400 text-center mb-2 text-lg font-semibold animate-bounce">
+                {errorMessage}
+              </div>
+            )}
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-2 word-display min-h-[48px] font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 text-transparent bg-clip-text">
+                {gameState.currentWord.map(l => l.char).join('')}
+              </div>
+            </div>
+
+            {/* Game Controls */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={clearSelection}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                  Clear
+                </button>
+                <button
+                  onClick={shuffleLetters}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors"
+                >
+                  <Shuffle className="w-5 h-5" />
+                  Shuffle
+                </button>
+                <button
+                  onClick={() => setShowInstructions(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors w-20"
+                >
+                  <HelpCircle className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <button
+                onClick={submitWord}
+                disabled={gameState.currentWord.length < 3}
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  hover:from-purple-500 hover:to-pink-500 transition-colors submit-glow"
+              >
+                Submit Word
+              </button>
+            </div>
           </div>
 
-          {/* Word Display */}
-          {errorMessage && (
-            <div className="text-rose-400 text-center mb-2 text-lg font-semibold animate-bounce">
-              {errorMessage}
-            </div>
-          )}
-          <div className="text-center mb-4">
-            <div className="text-3xl mb-2 word-display min-h-[48px] font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 text-transparent bg-clip-text">
-              {gameState.currentWord.map(l => l.char).join('')}
-            </div>
+          {/* Leaderboard */}
+          <div className="hidden lg:block w-80">
+            <Leaderboard currentScore={gameState.score} />
           </div>
-
-          {/* Game Controls */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={clearSelection}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-                Clear
-              </button>
-              <button
-                onClick={shuffleLetters}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors"
-              >
-                <Shuffle className="w-5 h-5" />
-                Shuffle
-              </button>
-              <button
-                onClick={() => setShowInstructions(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors w-20"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <button
-              onClick={submitWord}
-              disabled={gameState.currentWord.length < 3}
-              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold
-                disabled:opacity-50 disabled:cursor-not-allowed
-                hover:from-purple-500 hover:to-pink-500 transition-colors submit-glow"
-            >
-              Submit Word
-            </button>
-          </div>
-        </div>
-
-        {/* Leaderboard */}
-        <div className="hidden lg:block w-80">
-          <Leaderboard entries={[]} currentScore={gameState.score} />
         </div>
       </div>
 
@@ -546,7 +508,7 @@ function App() {
       {showLeaderboard && (
         <div className="lg:hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800/90 rounded-2xl p-8 max-w-2xl w-full">
-            <Leaderboard entries={[]} currentScore={gameState.score} />
+            <Leaderboard currentScore={gameState.score} />
             <button
               onClick={() => setShowLeaderboard(false)}
               className="mt-6 px-6 py-3 bg-purple-600 rounded-lg w-full"

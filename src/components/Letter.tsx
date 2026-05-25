@@ -42,10 +42,6 @@ const elementParticles = {
   crystal: '💎',
 };
 
-const isVowel = (char: string): boolean => {
-  return ['A', 'E', 'I', 'O', 'U'].includes(char.toUpperCase());
-};
-
 interface LetterProps {
   letter: LetterType;
   onClick: () => void;
